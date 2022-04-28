@@ -8,6 +8,11 @@ import os
 
 class Spectrogram:
 
+
+    # label_file_path : the path of the directory include label json files
+    # wav_file_path : the path of the directory include wav files
+    # save_region_dir : the path of the directory to save preprocessed data as pickle
+
     def __init__(self, label_file_path, wav_file_path, save_region_dir):
         self.label_file_path = label_file_path
         self.wav_file_path = wav_file_path
@@ -34,15 +39,18 @@ class Spectrogram:
         
         self.wav_label_dict = wav_label_dict
 
+    # load json file
     def loadJson(self, json_path):
         with open(json_path, "rt", encoding= 'UTF-8') as f:
             j = json.load(f)
         return j
 
+    # load wav file
     def loadWav(self, wav_path, sr, offset, duration):
         signal, sample_rate = librosa.load(wav_path, sr=sr, offset= offset, duration= duration)
         return signal, sample_rate
 
+    # store sampling duration from json file
     def sampling(self, json_path):
         sample = []
         j = self.loadJson(json_path)
@@ -50,6 +58,7 @@ class Spectrogram:
             sample.append([j["utterance"][i]["start"], j["utterance"][i]["end"]])
         return sample
 
+    # save spectrogram data as pickle
     def saveSpectrogram(self, spectrogram_data, pickle_name):
         save_base_dir = self.save_region_dir
         if not os.path.isdir(save_base_dir): os.mkdir(save_base_dir)
@@ -58,7 +67,6 @@ class Spectrogram:
 
         with open(save_pickle_path, "wb") as f:
             pickle.dump(spectrogram_data, f)
-
 
 
     def spectrogram(self, hop_length, n_fft, sr):
