@@ -2,7 +2,7 @@ import numpy as np
 import librosa, librosa.display
 import json
 import pickle
-
+import matplotlib.pyplot as plt
 
 import os
 
@@ -12,11 +12,15 @@ class Spectrogram:
     # label_file_path : the path of the directory include label json files
     # wav_file_path : the path of the directory include wav files
     # save_region_dir : the path of the directory to save preprocessed data as pickle
+    # save_image_dir : the path of the directory to save spectrogram plot
+    # vis : the number of image files want to plot
 
-    def __init__(self, label_file_path, wav_file_path, save_region_dir):
+    def __init__(self, label_file_path, wav_file_path, save_region_dir, save_image_dir,vis):
         self.label_file_path = label_file_path
         self.wav_file_path = wav_file_path
         self.save_region_dir = save_region_dir
+        self.save_image_dir = save_image_dir
+        self.vis = vis
 
         json_file_names = os.listdir(label_file_path)
         json_file_names = [j for j in json_file_names if j.endswith('.json')]
@@ -68,10 +72,28 @@ class Spectrogram:
         with open(save_pickle_path, "wb") as f:
             pickle.dump(spectrogram_data, f)
 
+    def visualization(self, spectrogram_data, sample_rate, hop_length, file_name):
+        save_image_dir = self.save_image_dir
+        if not os.path.isdir(save_image_dir): 
+            os.mkdir(save_image_dir)
+
+        save_image_file = os.path.join(save_image_dir, f"{file_name}_spectrogram.png")
+
+        plt.figure()
+        librosa.display.specshow(spectrogram_data, sr= sample_rate, hop_length=hop_length)
+        plt.xlabel("Time")
+        plt.ylabel("Frequency")
+        plt.colorbar(format="%+2.0f dB")
+        plt.title("Spectrogram (dB)")
+
+        plt.savefig(save_image_file)
+
+
 
     def spectrogram(self, hop_length, n_fft, sr):
         wav_label_dict = self.wav_label_dict
-
+        vis = self.vis
+        vis_num = 1
         pickle_num = 1
         for i, (label_file, wav_file) in enumerate(wav_label_dict.items(), 1):
             label_path = os.path.join(self.label_file_path, label_file)
@@ -91,4 +113,8 @@ class Spectrogram:
                     log_spectrogram = log_spectrogram[:, 0:401]
 
                 self.saveSpectrogram(log_spectrogram, pickle_name= pickle_num)
+
+                if vis_num < vis:
+                    self.visualization(log_spectrogram, sample_rate=sr, hop_length=hop_length, file_name= vis_num)
+                    vis_num +=1
                 pickle_num +=1
